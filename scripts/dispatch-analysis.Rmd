@@ -1,0 +1,52 @@
+---
+title: "Dispatch Analysis"
+output: html_notebook
+---
+
+Columbia PD dispatch: https://www.como.gov/CMS/911dispatch/police.php
+Downloaded: 1/30/2023
+Jan 1, 2017 - Jan 1, 2023
+
+Import libraries & data  
+```{r}
+library(tidyverse)
+
+dispatch <- read_csv("data/dispatch.csv")
+```
+
+80,680 dispatches (one row is one dispatch). 
+Has coordinates, need to be converted to a standard system
+Things we don't know: 
+  - result in arrest? 
+  - who was dispatched, or how many
+  
+Make sure to transform CallDateTime into date type
+  
+
+Data vetting: 
+Are there duplicate incident numbers? (we don't expect there to be)
+```{r}
+dispatch %>% group_by(InNum) %>% summarise(n = n()) %>% filter(n > 1)
+# there are 42 duplicates
+
+# look at the details to try and figure out why:
+
+dispatch %>% filter(InNum == "2022033169")
+# one row just has more information (could delete the other)
+
+dispatch %>% filter(InNum == "2022089607")
+# looks like duplicates with different values in ExtNatureDisplayName; want to followup with police on why
+```
+
+
+Run the group_by() and summarise() combo on all your categorical variables. 
+The count() function is a shortcut way to do this:
+
+```{r}
+# These two lines do the same thing
+
+dispatch %>% group_by(ExtNatureDisplayName) %>% summarise(n = n())
+
+dispatch %>% count(ExtNatureDisplayName) %>% arrange(desc(n))
+```
+
