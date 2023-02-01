@@ -3,28 +3,25 @@ title: "Dispatch Analysis"
 output: html_notebook
 ---
 
-Columbia PD dispatch: https://www.como.gov/CMS/911dispatch/police.php
-Downloaded: 1/30/2023
-Jan 1, 2017 - Jan 1, 2023
+Columbia PD dispatch: <https://www.como.gov/CMS/911dispatch/police.php> Downloaded: 1/30/2023 Jan 1, 2017 - Jan 1, 2023 *BUT we learned below that we couldn't get anything before 1/30/2022*
 
-Import libraries & data  
+Import libraries & data
+
 ```{r}
 library(tidyverse)
+library(lubridate)
 
 dispatch <- read_csv("data/dispatch.csv")
 ```
 
-80,680 dispatches (one row is one dispatch). 
-Has coordinates, need to be converted to a standard system
-Things we don't know: 
-  - result in arrest? 
-  - who was dispatched, or how many
-  
-Make sure to transform CallDateTime into date type
-  
+80,680 dispatches (one row is one dispatch).
 
-Data vetting: 
-Are there duplicate incident numbers? (we don't expect there to be)
+-   Has coordinates, need to be converted to a standard system
+-   Things we don't know: result in arrest? who was dispatched, or how many
+-   Make sure to transform CallDateTime into date type
+
+Data vetting: Are there duplicate incident numbers? (we don't expect there to be)
+
 ```{r}
 dispatch %>% group_by(InNum) %>% summarise(n = n()) %>% filter(n > 1)
 # there are 42 duplicates
@@ -38,9 +35,7 @@ dispatch %>% filter(InNum == "2022089607")
 # looks like duplicates with different values in ExtNatureDisplayName; want to followup with police on why
 ```
 
-
-Run the group_by() and summarise() combo on all your categorical variables. 
-The count() function is a shortcut way to do this:
+Run the group_by() and summarise() combo on all your categorical variables. The count() function is a shortcut way to do this:
 
 ```{r}
 # These two lines do the same thing
@@ -50,3 +45,71 @@ dispatch %>% group_by(ExtNatureDisplayName) %>% summarise(n = n())
 dispatch %>% count(ExtNatureDisplayName) %>% arrange(desc(n))
 ```
 
+How many dispatches were responding to reports of suspicious person? In which police area did most of these incidents occur? 
+
+```{r}
+
+dispatch %>% filter(ExtNatureDisplayName=="SUSPICIOUS PERSON")
+
+dispatch %>% 
+  filter(ExtNatureDisplayName=="SUSPICIOUS PERSON") %>% 
+  count(PolArea) %>% 
+  arrange(desc(n))
+```
+
+In which police area did the most dispatches occur overall?
+```{r}
+dispatch %>% count(PolArea) %>% arrange(desc(n))
+```
+
+Now we will reeformat CallDateTime to an actual date format. Following best practices in data cleaning and prep, we'll create a new column with reformatted data, using the mutate() function. The mutate() function can create a new column or overwrite an old one. Here, we'll create a new column called new_CDT. 
+We'll also use the lubridate package (add above) to utilize some of it's date formatting functions. Because our date column is currently formatted as m/d/y h/m/s, we'll use the mdy_hms() function. See the lubridate tipsheet (on github). 
+
+```{r}
+dispatch <- dispatch %>% mutate(new_CDT = mdy_hms(CallDateTime))
+```
+
+Now we can answer questions based on date and time:
+
+Which police area had the most incidents last year?
+
+```{r}
+dispatch %>% filter(year(new_CDT)=="2022") %>% count(PolArea) %>% arrange(desc(n))
+```
+
+What's the date range of our data? 
+
+```{r}
+dispatch %>% summarise(range(new_CDT))
+#Notice that we didn't actually get anything before 1/30/2022.
+```
+
+In which hour do the most incidents occur on average?
+
+```{r}
+dispatch %>% count(hour(new_CDT)) %>% arrange(desc(n))
+```
+
+We should acknowledge that these incidents types are not all on the same level. "Assist citizen" is quite different than "assault", for example. We could go through and systematically decide which incidents we're most interested in, depending on the questions we're asking. For the sake of a code example, let's pull out just "shots heard" and "assault".
+You can set multiple criteria in filter(), separated by `|` for "or" and `&` for "and".
+```{r}
+dispatch %>% 
+  filter(ExtNatureDisplayName %in% c("SHOTS HEARD", "ASSAULT"))
+
+#Which hour of the day had the most of these incidents? 
+dispatch %>% 
+  filter(ExtNatureDisplayName %in% c("SHOTS HEARD", "ASSAULT")) %>% 
+  count(hour(new_CDT)) %>% 
+  arrange(desc(n))
+
+# note: you can use the hour() function to pull the hour out of new_CDT, but the data also has a column called Hour. 
+
+```
+
+
+If we want to look at groups of events by searching for a keyword, such as "traffic", we can use a function called grepl() inside the filter function. This function has a lot of power and this is just one simple example of what you can do with it. It's very useful.
+Here we are searching for the word "traffic" in the ExtNatureDisplayName column. This function also has an argument called `ignore.case` that by default is FALSE (F) but we can set to TRUE (T) so that the search term is not case sensitive.
+```{r}
+dispatch %>% 
+  filter(grepl("traffic", ExtNatureDisplayName, ignore.case = T))
+```
