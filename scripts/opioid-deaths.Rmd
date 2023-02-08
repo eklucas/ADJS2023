@@ -1,0 +1,65 @@
+---
+title: "Opioid-related Deaths"
+output: html_notebook
+---
+
+**Data source:**
+
+[CDC WONDER](wonder.cdc.gov)\
+Multiple Cause of Death data\
+1999 - 2020 Final - Bridged Race data
+
+Link to request: <https://wonder.cdc.gov/controller/saved/D77/D324F276>
+
+```{r}
+# load libraries
+library(tidyverse)
+library(janitor)
+```
+
+DATASETS
+```{r}
+# load first data
+mo_deaths <- read_tsv("data/Multiple Cause of Death, 1999-2020, MO opioids by year.txt")
+
+# separate out notes
+notes <- mo_deaths %>% select(Notes) %>% filter(!is.na(Notes))
+write_csv(notes, "data/Notes-MCD-MO-opioids-year.csv")
+
+# clean up the main data
+mo_deaths <- mo_deaths %>% filter(!is.na(Deaths)) %>% clean_names()
+
+# add our own rate column
+mo_deaths <- mo_deaths %>% mutate(our_rate = deaths/population*100000)
+```
+
+```{r}
+# load the second dataset
+state_deaths <- read_tsv("data/Multiple Cause of Death, 1999-2020, opioids by state,year.txt")
+
+# separate out notes
+notes <- state_deaths %>% select(Notes) %>% filter(!is.na(Notes))
+write_csv(notes, "data/Notes-MCD-state-opioids-year.csv")
+
+# clean up the main data
+state_deaths <- state_deaths %>% filter(!is.na(Deaths)) %>% clean_names()
+
+# add our own rate column
+state_deaths <- state_deaths %>% mutate(our_rate = deaths/population*100000)
+```
+
+QUESTIONS
+
+Which state had the highest rate and in what year?
+
+```{r}
+state_deaths %>% arrange(desc(our_rate)) 
+# West Virginia in 2020
+```
+
+Where does Missouri rank in 2020? 
+```{r}
+state_deaths %>% arrange(desc(our_rate)) %>% filter(year==2020)
+# 23: about midway
+```
+
