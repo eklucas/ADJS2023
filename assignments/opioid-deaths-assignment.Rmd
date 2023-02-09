@@ -1,0 +1,30 @@
+---
+title: "Assignment4: opioid-related deaths"
+output: html_notebook
+---
+
+Load the tidyverse and janitor libraries:
+
+```{r}
+
+```
+
+Load the data that looks at opioid-related deaths across states and years. Make sure you separate out the notes and clean up the file like we did in class:
+
+```{r}
+
+```
+
+Below each of the following questions, create a code chunk to write code to answer the question. Write your answer in or below the code chunk.
+
+1.  Which year had the most deaths?
+
+2.  Which state had the highest overall death rate?\
+    (Note: you cannot sum death rates. You need to sum the deaths and population for each state, then recalculate the rate using the formula we talked about in class.)
+
+3.  How many years of data do we have?
+
+4.  Which states are missing data for one or more years? Does anything in the notes account for this? Does this affect the comparison of overall death rates by state?\
+    (Note: one row is one state by one year.)
+
+5.  How does your home state's death rate for 2020 compare with the national death rate?
