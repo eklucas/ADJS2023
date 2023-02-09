@@ -28,3 +28,5 @@ Below each of the following questions, create a code chunk to write code to answ
     (Note: one row is one state by one year.)
 
 5.  How does your home state's death rate for 2020 compare with the national death rate?
+
+Write a short methodology including any of the relevant components mentioned in the slides we went through in class, which are linked in Canvas under Module 2. 
