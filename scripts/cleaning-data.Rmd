@@ -1,0 +1,77 @@
+---
+title: "Cleaning strategies"
+output: html_notebook
+---
+
+LIBRARIES:
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(lubridate)
+#install.packages(readxl) # if needed
+library(readxl)
+```
+
+DATA (located in Files on Canvas):
+
+```{r}
+# deaths file h/t Mary Jo Webster, data editor of the Minnesota Star Tribune
+mn_deaths <- read_csv("data/MN_opiate_deaths.csv")
+
+# disney file h/t Andrew Ba Tran, investigative data reporter at the Washington Post
+disney <- 
+
+salaries <- 
+```
+
+TASKS: `mn_deaths`
+
+1.  Standardize column names
+
+2.  Convert `birthdate`, `deathdate` and `injurydate` to true date fields
+
+3.  Clean up hispanicethnicity
+
+4.  Create an agegroup category
+
+```{r}
+# 1
+mn_deaths <- mn_deaths %>% clean_names()
+
+# 2
+mn_deaths <- mn_deaths %>% mutate(new_birthdate = mdy(birthdate), .after=birthdate)
+#note that the .after argument in mutate determines where your new column will go
+mn_deaths <- mn_deaths %>% mutate(new_deathdate = mdy(deathdate), .after=deathdate)
+mn_deaths <- mn_deaths %>% mutate(new_injurydate = mdy(injury_date), .after=injury_date)
+
+# 3
+# note the inconsistencies and issues with `hispanicethnicity`:
+mn_deaths %>% count(hispanicethnicity)
+
+# use case_when() to assign values to our `new_ethnicity` column based on certain conditions:
+mn_deaths <- mn_deaths %>% 
+  mutate(new_ethnicity = case_when(
+    str_starts(str_to_lower(hispanicethnicity), "h") ~ "hispanic",
+    grepl("not|non", hispanicethnicity, ignore.case=T) ~ "not hispanic",
+    TRUE ~ "unknown"), .after=hispanicethnicity)
+
+# 4
+# use case_when() to great a new variable `age_groups` based on values in `ageyears`
+
+
+```
+
+
+TASKS: `disney`
+
+1.  Convert `release_date` to a true date
+
+2.  Convert `total_gross` and `inflation_adjusted_gross` to numbers fields
+
+TASKS: `salaries`
+
+1.  Convert pay fields to numbers
+
+2.  Clean up department
+
