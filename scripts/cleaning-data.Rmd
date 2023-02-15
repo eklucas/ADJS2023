@@ -22,6 +22,7 @@ mn_deaths <- read_csv("data/MN_opiate_deaths.csv")
 # disney file h/t Andrew Ba Tran, investigative data reporter at the Washington Post
 disney <- 
 
+# use read_excel() to import an Excel spreadsheet
 salaries <- 
 ```
 
@@ -50,14 +51,41 @@ mn_deaths <- mn_deaths %>% mutate(new_injurydate = mdy(injury_date), .after=inju
 mn_deaths %>% count(hispanicethnicity)
 
 # use case_when() to assign values to our `new_ethnicity` column based on certain conditions:
+
+# in-class solution
 mn_deaths <- mn_deaths %>% 
   mutate(new_ethnicity = case_when(
     str_starts(str_to_lower(hispanicethnicity), "h") ~ "hispanic",
     grepl("not|non", hispanicethnicity, ignore.case=T) ~ "not hispanic",
     TRUE ~ "unknown"), .after=hispanicethnicity)
 
+# other solutions
+mn_deaths <- mn_deaths %>% mutate(new_ethnicity = case_when(
+  hispanicethnicity %in% c("hispanic", "HISPANIC") ~ "hispanic",
+  hispanicethnicity %in% c("non-hispanic", "NON-HISPANIC", "not hispanic", "NOT HISPANIC", "NOT-HISPANIC") ~ "non-hispanic", 
+  TRUE ~ "unknown"
+))
+
+mn_deaths <- mn_deaths %>% mutate(new_ethnicity = case_when(
+  str_sub(str_to_lower(hispanicethnicity),1,1) == "h" ~ "hispanic",
+  str_sub(str_to_lower(hispanicethnicity),1,1) == "n" ~ "non-hispanic",
+  str_sub(str_to_lower(hispanicethnicity),1,1) == "u" ~ "unknown"
+))
+
+mn_deaths <- mn_deaths %>% mutate(new_ethnicity = case_when(
+  grepl("^h",hispanicethnicity, ignore.case=T) ~ "hispanic",
+  grepl("^n", hispanicethnicity, ignore.case=T) ~ "non-hispanic",
+  TRUE ~ "unknown"
+))
+
+# if you don't use the .after argument of mutate(), you can later use relocate():
+
+mn_deaths <- mn_deaths %>% relocate(new_ethnicity, .after=hispanicethnicity)
+
+
+
 # 4
-# use case_when() to great a new variable `age_groups` based on values in `ageyears`
+# use case_when() to create a new variable `age_groups` based on values in `ageyears`
 
 
 ```
@@ -68,6 +96,7 @@ TASKS: `disney`
 1.  Convert `release_date` to a true date
 
 2.  Convert `total_gross` and `inflation_adjusted_gross` to numbers fields
+
 
 TASKS: `salaries`
 
