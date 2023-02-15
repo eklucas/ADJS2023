@@ -20,10 +20,10 @@ DATA (located in Files on Canvas):
 mn_deaths <- read_csv("data/MN_opiate_deaths.csv")
 
 # disney file h/t Andrew Ba Tran, investigative data reporter at the Washington Post
-disney <- 
+disney <- read_csv("data/disney_movies_total_gross.csv")
 
 # use read_excel() to import an Excel spreadsheet
-salaries <- 
+salaries <- read_excel("data/Bloomington Salaries.xlsx", sheet=1)
 ```
 
 TASKS: `mn_deaths`
@@ -86,7 +86,30 @@ mn_deaths <- mn_deaths %>% relocate(new_ethnicity, .after=hispanicethnicity)
 
 # 4
 # use case_when() to create a new variable `age_groups` based on values in `ageyears`
+# < 18
+# 18 - 29
+# 30 - 39
+# 40 - 49
+# 50 - 59
+# 60 - 69
+# 70 - 79
+# 80+
 
+mn_deaths <- mn_deaths %>% mutate(age_groups = case_when(
+  ageyears < 18 ~ "under 18",
+  ageyears < 30 & ageyears >= 18 ~ "18-29 years",
+  ageyears >= 30 & ageyears < 40 ~ "30-39 years",
+  ageyears >= 40 & ageyears < 50 ~ "40-49 years",
+  ageyears >= 50 & ageyears < 60 ~ "50-59 years",
+  ageyears >= 60 & ageyears < 70 ~ "60-69 years",
+  ageyears >= 70 & ageyears < 80 ~ "70-79 years",
+  ageyears >= 80 ~ "80+ years",
+  TRUE ~ "unknown"
+))
+
+mn_deaths <- mn_deaths %>% relocate(age_groups, .after=ageyears)
+
+write_csv(mn_deaths, "data/clean_mn_opiate_deaths.csv", na="")
 
 ```
 
@@ -97,10 +120,26 @@ TASKS: `disney`
 
 2.  Convert `total_gross` and `inflation_adjusted_gross` to numbers fields
 
+```{r}
+disney <- disney %>% mutate(new_release_dt = mdy(release_date),
+                  new_total_gross = parse_number(total_gross),
+                  new_adjusted = parse_number(inflation_adjusted_gross))
+```
+
+What are the top 10 highest grossing disney movies of all time?
+```{r}
+disney %>% arrange(desc(new_total_gross))
+```
 
 TASKS: `salaries`
 
 1.  Convert pay fields to numbers
 
 2.  Clean up department
+
+```{r}
+salaries %>% summarise(gross = sum(total_comp), 
+                       overtime = sum(overtime_oncall, na.rm=TRUE),
+                       total_sal = sum(salary_2021, na.rm=TRUE))
+```
 
