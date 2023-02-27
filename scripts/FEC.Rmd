@@ -1,0 +1,65 @@
+---
+title: "FEC Campaign Finance Analysis"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+The data comes from the [Federal Election Commission Bulk Data](https://www.fec.gov/data/browse-data/?tab=bulk-data)
+
+1.  transactions from one committee to another; [Data dictionary](https://www.fec.gov/campaign-finance-data/any-transaction-one-committee-another-file-description/)
+
+2.  Candidate Master File; [Data dictionary](https://www.fec.gov/campaign-finance-data/candidate-master-file-description/)
+
+3.  Committee Master File; [Data dictionary](https://www.fec.gov/campaign-finance-data/committee-master-file-description/)
+
+
+```{r}
+transactions <- read_csv("data/campfin/transactions.csv")
+candidates <- read_csv("data/campfin/candidates.csv")
+committees <- read_csv("data/campfin/committees.csv")
+```
+
+*   Note that the `transaction_dt` field is stored as "character" (should be converted to date)
+
+Test some joins
+
+```{r}
+left_join(transactions, candidates, by = "cand_id")
+# returns all the rows from `transactions` and all the matches in `candidates`; columns from both
+
+left_join(transactions, candidates, by = "cand_id") %>% 
+  filter(is.na(cand_name))
+# test the join: if there are NAs in all of the `candidates` fields that means there was no match; not the case here. 
+
+inner_join(transactions, candidates, by = "cand_id")
+# returns only matches from `transactions` and `candidates`; columns from both
+# in this case the same as left_join()
+
+semi_join(candidates, transactions, by = "cand_id")
+# shows all the rows from `candidates` that have a match in `transactions`; only the columns from `candidates`
+
+transactions %>% left_join(candidates, by = "cand_id")
+# another way to write the first join; the pipe ( %>% ) negates the need for the first argument, in this case the left or main table.
+
+left_join(transactions, committees, by = "cmte_id") 
+# returns all the rows from `transactions` and all the matches in `committees`; columns from both
+
+left_join(transactions, committees, by = "cmte_id") %>% 
+  filter(is.na(cmte_nm))
+# test the join: if there are NAs in all of the `committee` fields that means there was no match; not the case here. 
+```
+
+Initial questions of the data
+
+```{r}
+# what is the total amount of money spent?
+transactions %>% summarise(total = sum(transaction_amt))
+
+
+# how much was spent advocating for candidates vs. opposing candidates?
+transactions %>% group_by(transaction_desc) %>% summarise(total = sum(transaction_amt))
+```
