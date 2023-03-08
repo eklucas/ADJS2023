@@ -1,0 +1,62 @@
+---
+title: "Squirrels"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+#install.packages("RSocrata")
+library(RSocrata)
+library(lubridate)
+```
+
+https://data.cityofnewyork.us/api/views/vfnx-vebw/rows.csv?accessType=DOWNLOAD
+
+```{r}
+#link from the Export button (as CSV)
+read_csv("https://data.cityofnewyork.us/api/views/vfnx-vebw/rows.csv?accessType=DOWNLOAD")
+
+#link from API Endpoint (as CSV) -- this will only return 1000 rows
+read_csv("https://data.cityofnewyork.us/resource/vfnx-vebw.csv")
+
+# link from API Endpoint (as CSV) -- this will return the full dataset
+# read.socrata comes from the RSocrata package
+squirrels <- read.socrata("https://data.cityofnewyork.us/resource/vfnx-vebw.csv")
+
+# you can add parameters to your URL
+read.socrata("https://data.cityofnewyork.us/resource/vfnx-vebw.csv?Age=Adult") #only Adult squirrels. Age is a column in the dataset and Adult is one of the values in that column. 
+
+read.socrata("https://data.cityofnewyork.us/resource/vfnx-vebw.csv?Age=Adult&shift=PM") #add in another parameter
+```
+
+Date
+```{r}
+squirrels <- squirrels %>% mutate(new_date = mdy(date), .after=date)
+
+squirrels %>% summarise(range(new_date))
+# Oct 6 through Oct 20, 2018
+```
+
+```{r}
+squirrels %>% count(chasing) %>% arrange(desc(n))
+
+squirrels %>% 
+  filter(above_ground_sighter != "FALSE") %>% 
+  count(ags = as.numeric(above_ground_sighter)) %>% 
+  arrange(desc(ags))
+
+squirrels %>% count(grepl("tree", specific_location, ignore.case=T))
+
+```
+Notes:
+more squirrels seen on the night shift (1676/3023 = 55%)
+most squirrels were adult (2568/3023 = 85%)
+most squirrels are gray (2473/3023 = 82%)
+most squirrels were seen on the ground (2116/3023 = 70%)
+one squirrel seen 180 feet off the ground (highest squirrel)
+most squirrels were not seen running (2293/3023 = 76%)
+
+
+
+
+

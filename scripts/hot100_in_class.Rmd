@@ -1,0 +1,120 @@
+---
+title: "Hot100 Class Questions"
+output: html_notebook
+---
+
+Libraries
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+Data
+```{r}
+hot100 <- read_csv("data/hot-100-current.csv")
+```
+
+1. What is the date range for this data? 
+```{r}
+hot100 %>% summarise(range(chart_week))
+
+```
+2. Which songs have been on the chart the longest? 
+```{r}
+hot100 %>% arrange(desc(wks_on_chart))
+
+hot100 %>% group_by(title, performer) %>% summarise(max = max(wks_on_chart)) %>% arrange(desc(max))
+```
+
+3. Which artist had the most #1 songs on the charts? 
+```{r}
+hot100 %>% 
+  filter(current_week==1) %>% 
+  group_by(performer) %>% 
+  summarise(n = n_distinct(title)) %>% 
+  arrange(desc(n))
+```
+
+How many #1 songs has Mariah Carey sang in? 
+```{r}
+hot100 %>% 
+  filter(current_week==1) %>% 
+  group_by(performer) %>% 
+  count(title) %>% 
+  filter(grepl("mariah", performer, ignore.case=T))
+```
+
+side note: create a table of #1 songs
+```{r}
+num1_songs <- hot100 %>% 
+  filter(current_week==1) %>% 
+  distinct(title, performer)
+
+num1_songs %>% count(performer) %>% arrange(desc(n))
+```
+
+Looking at Drake
+```{r}
+hot100 %>% 
+  filter(grepl("drake", performer, ignore.case=T) & !performer %in% c("Charlie Drake", "Guy Drake", "Miranda Cosgrove Featuring Drake Bell", "Pete Drake And His Talking Steel Guitar")) %>% 
+  count(performer)
+```
+
+
+4. Which song has spent the most weeks at #1? 
+```{r}
+hot100 %>% 
+  filter(current_week==1) %>% 
+  count(performer, title) %>% 
+  arrange(desc(n))
+```
+
+5. Which artist had the most songs in the top 10? 
+```{r}
+hot100 %>% 
+  filter(current_week < 11) %>% 
+  distinct(performer, title) %>% 
+  count(performer) %>% 
+  arrange(desc(n))
+```
+
+6. How many times has a song with the word "Christmas" been on the charts?
+Which month features the most christmas songs? 
+```{r}
+hot100 %>% 
+  filter(grepl("christmas", title, ignore.case=T)) %>% 
+  group_by(month(chart_week)) %>% 
+  summarise(n = n_distinct(performer,title))
+```
+
+7. How many times has the word "love" appeared in top 100 songs in February?
+How does this compare to the other months? 
+```{r}
+hot100 %>% 
+  filter(grepl("love", title, ignore.case=T)) %>% 
+  group_by(month(chart_week)) %>% 
+  summarise(n = n_distinct(performer,title)) %>% 
+  arrange(desc(n))
+
+hot100 %>% 
+  filter(grepl("love", title, ignore.case=T)) %>% 
+  count(title)
+```
+
+7. What was the #1 song the day you were born? 
+```{r}
+hot100 %>% 
+  filter(chart_week <= "1983-05-27") %>% 
+  arrange(desc(chart_week), current_week)
+```
+
+Which song jumped the highest in one week? 
+```{r}
+hot100 %>% 
+  mutate(jump = case_when(
+    is.na(last_week) ~ 101 - current_week,
+    last_week == 0 ~ 101 - current_week,
+    TRUE ~ last_week - current_week)) %>% 
+  arrange(desc(jump))
+```
+
